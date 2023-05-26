@@ -9,9 +9,11 @@
 #include "SphereCollider.h"
 #include "BoxCollider.h"
 #include <string>
-//#include "Collision.cpp"
+
+#include <Render/Render.h>
 
 namespace Collision {
+
 
 	bool hasCollided(BoxCollider b1, BoxCollider b2) {
 		glm::vec3 diff = b1.position + b1.lwh - b2.position + b2.lwh;
@@ -123,35 +125,29 @@ std::ostream& operator<<(std::ostream& os, const glm::vec3& vec)
 	os << vec.x << ' ' << vec.y << ' ' << vec.z;
 	return os;
 }
-std::vector<std::string> strsplit(std::string str, char dem) {
-	std::vector<std::string> strs;
-	//std::vector<std::string>* strs = new std::vector<std::string>();
-	while (str.size() != 0) {
-		std::cout << str << "\n";
-		
-		size_t pos = str.find(dem);
-		std::cout << "pos: " << pos << "\n";
-		// dem does exist
-		if (pos != std::string::npos) {
-			std::string temp = str.substr(0, pos);
-			strs.push_back(temp);
-			str.erase(0, pos+1);
-		}
-		else {
-			std::string temp = str;
-			strs.push_back(temp);
-			break;
-		}
-	}
-	return strs;
-}
+
 int main() {
-	std::vector<std::string> s = strsplit("hello hi hye, h", 'h');
-	//std::vector<std::string> s2 = *s;
-	std::cout << "final\n\n";
-	for (std::string c : s) {
-		std::cout << c << "\n";
+	Object base;
+	Object move;
+	base.position = { 0,-3,0 };
+	base.collider = BoxCollider({ 0, 0, 0 }, {1,1,1});
+	move.position = { 0,0,0 };
+	move.collider = BoxCollider({ 0,0,0 }, { 1,1,1 });
+	Render::init();
+
+	Render::addModel("assets/cube.obj", "Cube");
+
+	Render::addInstance("Cube", {0,0,0}, {0,0,0}, {1,1,1});
+
+	while (Render::keepWindow) {
+
+		Render::removeAllInstances();
+		Render::addInstance("Cube", base.position, { 0,0,0 }, { 1,1,1 });
+		Render::addInstance("Cube", move.position, { 0,0,0 }, { 1,1,1 });
+		Render::renderAll();
+
 	}
+	Render::exit();
 	//Container c;
 	//c.addChild(new Object({ 0,1,0 }, { 0,0,0 }));
 	//SphereCollider s1({0,0,0}, 1);

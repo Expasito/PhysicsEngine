@@ -12,6 +12,12 @@
 
 #include <Render/Render.h>
 
+std::ostream& operator<<(std::ostream& os, const glm::vec3& vec)
+{
+	os << vec.x << ' ' << vec.y << ' ' << vec.z;
+	return os;
+}
+
 namespace Collision {
 
 
@@ -21,6 +27,9 @@ namespace Collision {
 		diff.x = abs(diff.x);
 		diff.y = abs(diff.y);
 		diff.z = abs(diff.z);
+		std::cout << "here\n";
+		std::cout << diff.x << " " << diff.y << " " << diff.z << "\n";
+		std::cout << dist << "\n";
 		if (diff.x < dist.x && diff.y < dist.y && diff.z < dist.z) {
 			return true;
 		}
@@ -120,34 +129,115 @@ void step(Circle* circle) {
 	
 }
 
-std::ostream& operator<<(std::ostream& os, const glm::vec3& vec)
-{
-	os << vec.x << ' ' << vec.y << ' ' << vec.z;
-	return os;
-}
 
-int main() {
-	Object base;
-	Object move;
-	base.position = { 0,-3,0 };
-	base.collider = BoxCollider({ 0, 0, 0 }, {1,1,1});
-	move.position = { 0,0,0 };
-	move.collider = BoxCollider({ 0,0,0 }, { 1,1,1 });
-	Render::init();
+/*
+* 
+*  Testing polymorphism, will be used for Colliders
+*/
+class Entity {
+public:
+	int price;
+	virtual void print() = 0;
+private:
+};
 
-	Render::addModel("assets/cube.obj", "Cube");
-
-	Render::addInstance("Cube", {0,0,0}, {0,0,0}, {1,1,1});
-
-	while (Render::keepWindow) {
-
-		Render::removeAllInstances();
-		Render::addInstance("Cube", base.position, { 0,0,0 }, { 1,1,1 });
-		Render::addInstance("Cube", move.position, { 0,0,0 }, { 1,1,1 });
-		Render::renderAll();
-
+class Cow : public Entity {
+public:
+	Cow() {
+		this->price = 5;
 	}
-	Render::exit();
+	void print() {
+		std::cout << "this is a cow\n";
+	}
+private:
+};
+
+class Pig : public Entity {
+public:
+	Pig() {
+		this->price = 5;
+	}
+	void print() {
+		std::cout << "this is a pig\n";
+	}
+private:
+};
+
+
+void test(Entity* ent) {
+	ent->print();
+}
+int main() {
+	Render::init();
+	Render::addModel("assets/Sphere.obj", "Sphere");
+	
+	SphereCollider* a = new SphereCollider();
+	a->position = { 0,0,0 };
+	a->radius = 1;
+	SphereCollider* b = new SphereCollider();
+	b->position = { .2,10,0 };
+	b->radius = 1;
+	while (Render::keepWindow) {
+		glm::vec3 forces = { 0,-9.8 * 1 / 1000,0 };
+		if (Collision::hasCollided(*a, *b)) {
+			forces.y += 9.8*1/1000;
+			glm::vec3 dir = glm::normalize(a->position - b->position);
+			std::cout << "Dir: " << dir << "\n";
+			dir.x *= -9.8 * 1 / 1000.0;
+			dir.y *= -9.8 * 1/1000.0;
+			dir.z *= -9.8 * 1/1000.0;
+			//std::cout << dir << "\n";
+			forces += dir;
+			std::cout << "Forces: " << forces << "\n";
+
+			
+
+		}
+		b->position += forces;
+		Render::addInstance("Sphere", b->position, { 0,0,0 }, { 1,1,1 });
+		Render::addInstance("Sphere", a->position, { 0,0,0 }, { 1,1,1 });
+		Render::renderAll();
+		Render::removeInstances("Sphere");
+		//std::cout << b->position << "\n";
+	}
+
+
+
+
+	//Cow* a = new Cow();
+	//Pig* b = new Pig();
+	//
+
+	//std::vector<Entity*> ents;
+
+	//ents.push_back(a);
+	//ents.push_back(b);
+
+	//for (Entity* e : ents) {
+	//	test(e);
+	//}
+
+	//Object base;
+	//Object move;
+	//base.position = { 0,-3,0 };
+	//base.collider = BoxCollider({ 0, 0, 0 }, {1,1,1});
+	//move.position = { 0,0,0 };
+	//move.collider = BoxCollider({ 0,0,0 }, { 1,1,1 });
+	//Render::init();
+
+	//Render::addModel("assets/cube.obj", "Cube");
+
+	//Render::addInstance("Cube", {0,0,0}, {0,0,0}, {1,1,1});
+
+	//while (Render::keepWindow) {
+
+	//	Render::removeAllInstances();
+	//	Render::addInstance("Cube", base.position, { 0,0,0 }, { 1,1,1 });
+	//	Render::addInstance("Cube", move.position, { 0,0,0 }, { 1,1,1 });
+	//	Render::renderAll();
+
+	//}
+	//Render::exit();
 	//Container c;
 	//c.addChild(new Object({ 0,1,0 }, { 0,0,0 }));
 	//SphereCollider s1({0,0,0}, 1);

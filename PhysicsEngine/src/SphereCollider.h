@@ -10,6 +10,10 @@ public:
     SphereCollider();
     SphereCollider(glm::vec3 pos, double rad);
 
+    void print() {
+        std::cout << "Sphere Collider\n";
+    }
+
 private:
 };
 

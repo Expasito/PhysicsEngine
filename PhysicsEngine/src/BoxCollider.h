@@ -9,6 +9,10 @@ public:
 
     BoxCollider();
     BoxCollider(glm::vec3 pos, glm::vec3 lenwidhei);
+
+    void print() {
+        std::cout << "Box Collider\n";
+    }
 private:
 };
 

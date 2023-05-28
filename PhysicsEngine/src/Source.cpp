@@ -9,6 +9,8 @@
 #include "SphereCollider.h"
 #include "BoxCollider.h"
 #include <string>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include <Render/Render.h>
 
@@ -27,7 +29,6 @@ namespace Collision {
 		diff.x = abs(diff.x);
 		diff.y = abs(diff.y);
 		diff.z = abs(diff.z);
-		std::cout << "here\n";
 		std::cout << diff.x << " " << diff.y << " " << diff.z << "\n";
 		std::cout << dist << "\n";
 		if (diff.x < dist.x && diff.y < dist.y && diff.z < dist.z) {
@@ -38,14 +39,17 @@ namespace Collision {
 
 	bool hasCollided(SphereCollider s1, SphereCollider s2) {
 		glm::vec3 diff = s2.position - s1.position;
-		double radiusSum = s2.radius + s1.radius;
-		diff.x = abs(diff.x);
-		diff.y = abs(diff.y);
-		diff.z = abs(diff.z);
-		if (diff.x < radiusSum && diff.y < radiusSum && diff.z < radiusSum) {
-			return true;
-		}
-		return false;
+		double radiusSum = (s2.radius + s1.radius);
+		float dist = sqrt(pow(diff.x, 2) + pow(diff.y, 2) + pow(diff.z, 2));
+		//std::cout << "Dist "<<dist << "\n";
+		//diff.x = abs(diff.x);
+		//diff.y = abs(diff.y);
+		//diff.z = abs(diff.z);
+		return dist < radiusSum;
+		//if (diff.x < radiusSum && diff.y < radiusSum && diff.z < radiusSum) {
+		//	return true;
+		//}
+		//return false;
 	}
 
 	glm::vec3 direction(SphereCollider s1, SphereCollider s2) {
@@ -163,6 +167,18 @@ public:
 private:
 };
 
+float sgn(float x) {
+	if (x > 0) {
+		return 1;
+	}
+	else if (x < 0) {
+		return -1;
+	}
+	else {
+		return 0;
+	}
+}
+
 
 void test(Entity* ent) {
 	ent->print();
@@ -171,31 +187,113 @@ int main() {
 	Render::init();
 	Render::addModel("assets/Sphere.obj", "Sphere");
 	
-	SphereCollider* a = new SphereCollider();
-	a->position = { 0,0,0 };
-	a->radius = 1;
-	SphereCollider* b = new SphereCollider();
-	b->position = { .2,10,0 };
-	b->radius = 1;
-	while (Render::keepWindow) {
-		glm::vec3 forces = { 0,-9.8 * 1 / 1000,0 };
-		if (Collision::hasCollided(*a, *b)) {
-			forces.y += 9.8*1/1000;
-			glm::vec3 dir = glm::normalize(a->position - b->position);
-			std::cout << "Dir: " << dir << "\n";
-			dir.x *= -9.8 * 1 / 1000.0;
-			dir.y *= -9.8 * 1/1000.0;
-			dir.z *= -9.8 * 1/1000.0;
-			//std::cout << dir << "\n";
-			forces += dir;
-			std::cout << "Forces: " << forces << "\n";
+	SphereCollider* a = new SphereCollider({-1.0,1.0,0.0},1.0);
 
+	SphereCollider* b = new SphereCollider({0.0,10.0,0.0},1.0);
+
+	SphereCollider* c = new SphereCollider({1.0,0.0,0.0}, 1.0);
+
+	std::vector<SphereCollider*> spheres;
+	spheres.push_back(a);
+	spheres.push_back(b);
+	spheres.push_back(c);
+	spheres.push_back(new SphereCollider({ 4.0,1.0,0.0 }, 1));
+	spheres.push_back(new SphereCollider({ 2.0,5.0,0.0 }, 1));
+	spheres.push_back(new SphereCollider({ -5.0,15.0,0.0 }, 1));
+
+	spheres.push_back(new SphereCollider({ 2.0,7.0,0.0 }, 1));
+	spheres.push_back(new SphereCollider({ -5.0,20.0,0.0 }, 1));
+
+
+
+	float timestep = 1 / 100.0;
+
+	while (Render::keepWindow) {
+		// already account for gravity
+		for (int i = 0; i < 1; i++) {
+			//std::cout << "iteration\n";
+			for (SphereCollider* sc : spheres) {
+				glm::vec3 forces = { 0,-9.8 * timestep,0 };
+				for (SphereCollider* sc2 : spheres) {
+					if (sc == sc2) {
+						continue;
+					}
+
+					if (Collision::hasCollided(*sc, *sc2)) {
+						//forces.y += 9.8*1/1000
+
+						//forces += -bvel;
+
+						//std::cout << sc->position << "   " << sc2->position << "\n";
+
+						glm::vec3 dir = glm::normalize(sc->position - sc2->position);
+						glm::vec3 dir2 = glm::normalize(sc->position - sc2->position);
+						//std::cout << "Dir: " << dir << "\n";
+						//std::cout << "Dir2: " << glm::normalize(sc2->position - sc->position) << "\n";
+						//dir.x = 0;
+						double angle = -(atan(dir.x / dir.y) * 180.0 / M_PI);
+						//std::cout << "Angle: " << angle << "\n";
+
+						dir.z = 0;
+						dir.x = sin(angle * M_PI / 180.0) * -9.8;
+						dir.y = -cos(angle * M_PI / 180.0) * -9.8;
+						//std::cout << "Dir2: " << dir << "\n";
+						//dir.z = -9.8 * 1/1000.0;
+						//std::cout << dir << "\n";
+						//std::cout << "Forces1: " << forces << "\n";
+						//dir.x = 0;
+						dir.x *= sgn(dir2.x)*-sgn(angle);
+						dir.y *= sgn(dir2.y);
+						//forces.x *= sgn(dir.x);
+						//forces.y *= sgn(dir.y);
+						//forces.z *= sgn(dir.z);
+						forces += dir;
+						//std::cout << "Forces: " << forces << "\n";
+
+
+
+
+					}
+
+					//if (sc->position.y <= 0) {
+					//	std::cout << "lower\n";
+					//	forces.y += 9.5;
+					//}
+					
+					
+					//if (fabs(sc->position.x - 5) > 0) {
+					//	sc->position.x = 5;
+					//}
+
+				}
+				//std::cout << "Forces: " << forces << "\n";
+				//std::cout << sc->position.y << "\n";
+				if (sc->position.y <= 0) {
+					forces.y += 9.8;
+					//sc->position.y = 0;
+				}
+				//if (sc->position.x > 3) {
+				//	forces.x -= abs(sc->velocity.x);
+				//}
+				//if (sc->position.x < -3) {
+				//	forces.x += abs(sc->velocity.x);
+				//}
+
+				//forces.x *= .99;
+				//forces.y *= .99;
+				//forces.z *= .99;
+				sc->acceleration = forces;
+				sc->velocity += sc->acceleration * timestep;
+				sc->position += sc->velocity * timestep;
+			}
 			
 
 		}
-		b->position += forces;
-		Render::addInstance("Sphere", b->position, { 0,0,0 }, { 1,1,1 });
-		Render::addInstance("Sphere", a->position, { 0,0,0 }, { 1,1,1 });
+		for (SphereCollider* sc : spheres) {
+			Render::addInstance("Sphere", sc->position, { 0,0,0 }, { 1,1,1 });
+		}
+		
+		
 		Render::renderAll();
 		Render::removeInstances("Sphere");
 		//std::cout << b->position << "\n";

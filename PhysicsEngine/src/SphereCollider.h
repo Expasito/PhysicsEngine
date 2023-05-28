@@ -6,6 +6,8 @@ class SphereCollider :
 public:
 
     glm::vec3 position;
+    glm::vec3 velocity;
+    glm::vec3 acceleration;
     double radius;
     SphereCollider();
     SphereCollider(glm::vec3 pos, double rad);

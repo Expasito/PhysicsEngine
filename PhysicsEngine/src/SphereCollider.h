@@ -9,6 +9,7 @@ public:
     glm::vec3 velocity;
     glm::vec3 acceleration;
     double radius;
+    double mass;
     SphereCollider();
     SphereCollider(glm::vec3 pos, double rad);
 

@@ -11,7 +11,7 @@
 #include <string>
 #define _USE_MATH_DEFINES
 #include <math.h>
-
+#include <thread>
 #include <Render/Render.h>
 
 std::ostream& operator<<(std::ostream& os, const glm::vec3& vec)
@@ -19,6 +19,8 @@ std::ostream& operator<<(std::ostream& os, const glm::vec3& vec)
 	os << vec.x << ' ' << vec.y << ' ' << vec.z;
 	return os;
 }
+
+
 
 namespace Collision {
 
@@ -194,26 +196,39 @@ int main() {
 	SphereCollider* c = new SphereCollider({1.0,0.0,0.0}, 1.0);
 
 	std::vector<SphereCollider*> spheres;
-	spheres.push_back(a);
-	spheres.push_back(b);
-	spheres.push_back(c);
-	spheres.push_back(new SphereCollider({ 4.0,1.0,0.0 }, 1));
-	spheres.push_back(new SphereCollider({ 2.0,5.0,0.0 }, 1));
-	spheres.push_back(new SphereCollider({ -5.0,15.0,0.0 }, 1));
+	//spheres.push_back(a);
+	//spheres.push_back(b);
+	//spheres.push_back(c);
+	//spheres.push_back(new SphereCollider({ 4.0,1.0,0.0 }, 1));
+	//spheres.push_back(new SphereCollider({ 2.0,5.0,0.0 }, 1));
+	//spheres.push_back(new SphereCollider({ -5.0,15.0,0.0 }, 1));
 
-	spheres.push_back(new SphereCollider({ 2.0,7.0,0.0 }, 1));
-	spheres.push_back(new SphereCollider({ -5.0,20.0,0.0 }, 1));
+	//spheres.push_back(new SphereCollider({ 2.0,7.0,0.0 }, 1));
+	//spheres.push_back(new SphereCollider({ 0.1,1.0,0.0 }, 1));
+	spheres.push_back(new SphereCollider({ 1.1,5.0,0.0 }, 1));
+	//for (int i = 0; i < 15; i++) {
+	//	spheres.push_back(new SphereCollider({ 0.0,(double)(i*2+5),0.0}, 1));
+	//}
 
+	double framerate = 120.0;
 
-
-	float timestep = 1 / 100.0;
+	float timestep = 1.0 / 256;
+	double cor = 1;
+	float milis=16.6;
 
 	while (Render::keepWindow) {
-		// already account for gravity
-		for (int i = 0; i < 1; i++) {
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		//timestep = 1.0 / framerate/10.0;
+		
+
+
+		
+		for (int i = 0; i < 256/framerate; i++) {
 			//std::cout << "iteration\n";
 			for (SphereCollider* sc : spheres) {
-				glm::vec3 forces = { 0,-9.8 * timestep,0 };
+				// already account for gravity
+				glm::vec3 forces = { 0,-9.8,0 };
 				for (SphereCollider* sc2 : spheres) {
 					if (sc == sc2) {
 						continue;
@@ -232,11 +247,25 @@ int main() {
 						//std::cout << "Dir2: " << glm::normalize(sc2->position - sc->position) << "\n";
 						//dir.x = 0;
 						double angle = -(atan(dir.x / dir.y) * 180.0 / M_PI);
-						//std::cout << "Angle: " << angle << "\n";
+						std::cout << dir << "\n";
+						std::cout << "Angle: " << angle << "\n";
+						std::cout << "vel: " << sc->velocity << "\n";
+						std::cout << "Angle2: " << atan(sc->velocity.x / sc->velocity.y) << "\n";
+						int a;
+						std::cin >> a;
 
 						dir.z = 0;
 						dir.x = sin(angle * M_PI / 180.0) * -9.8;
 						dir.y = -cos(angle * M_PI / 180.0) * -9.8;
+
+						double x1a = (sc->mass - cor * sc2->mass) * sc->velocity.x / (sc->mass + sc2->mass) +
+							(1 + cor) * sc2->mass * sc2->velocity.x / (sc->mass + sc2->mass);
+
+						double x2a = (1 + cor) * sc->mass * sc->velocity.x / (sc->mass + sc2->mass) +
+							(sc2->mass - cor * sc->mass) * sc2->velocity.x / (sc->mass + sc2->mass);
+
+						dir.x = sin(angle * M_PI / 180.0) * sc2->velocity.y;
+						dir.y = -cos(angle * M_PI / 180.0) * sc2->velocity.y;
 						//std::cout << "Dir2: " << dir << "\n";
 						//dir.z = -9.8 * 1/1000.0;
 						//std::cout << dir << "\n";
@@ -269,12 +298,18 @@ int main() {
 				//std::cout << "Forces: " << forces << "\n";
 				//std::cout << sc->position.y << "\n";
 				if (sc->position.y <= 0) {
-					forces.y += 9.8;
+					//forces.y += 9.8;
+					forces.y += 1 * -2*(sc->velocity.y) / timestep;
 					//sc->position.y = 0;
 				}
-				//if (sc->position.x > 3) {
-				//	forces.x -= abs(sc->velocity.x);
-				//}
+				if (sc->position.x > 10) {
+					forces.x += 1 * -2*(sc->velocity.x) / timestep;
+				}
+				if (sc->position.x < -10) {
+					forces.x += 1 * -2 * (sc->velocity.x) / timestep;
+				}
+
+				std::cout << "Forces1: " << forces << "\n";
 				//if (sc->position.x < -3) {
 				//	forces.x += abs(sc->velocity.x);
 				//}
@@ -290,13 +325,20 @@ int main() {
 
 		}
 		for (SphereCollider* sc : spheres) {
-			Render::addInstance("Sphere", sc->position, { 0,0,0 }, { 1,1,1 });
+			Render::addInstance("Sphere", sc->position, { 0,0,0 }, { sc->radius,sc->radius,sc->radius });
 		}
 		
 		
 		Render::renderAll();
 		Render::removeInstances("Sphere");
 		//std::cout << b->position << "\n";
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		milis = (end - begin).count() / 1000000.0;
+		std::cout << "Time difference = " << milis << "[ms]" << " FPS: " << 1000.0 / milis << "\n";
+		// this sets the frame rate
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 / framerate - milis)));
+		
 	}
 
 

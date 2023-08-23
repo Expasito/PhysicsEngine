@@ -47,6 +47,7 @@ namespace Collision {
 		//diff.x = abs(diff.x);
 		//diff.y = abs(diff.y);
 		//diff.z = abs(diff.z);
+		std::cout << "Distances: " << dist << " " << radiusSum << "\n";
 		return dist < radiusSum;
 		//if (diff.x < radiusSum && diff.y < radiusSum && diff.z < radiusSum) {
 		//	return true;
@@ -113,7 +114,7 @@ void step(Circle* circle) {
 	//}
 
 	// this is a collision with y=0
-	if (circle->center.y < 0) {
+	if (circle->center.y - circle->radius < 0) {
 		//add normal force
 		circle->force.p.y += 9.8;
 		//impact force
@@ -189,32 +190,26 @@ int main() {
 	Render::init();
 	Render::addModel("assets/Sphere.obj", "Sphere");
 	
-	SphereCollider* a = new SphereCollider({-1.0,1.0,0.0},1.0);
+	SphereCollider* a = new SphereCollider({-1.0,1.0,0.0},1.0,1.0);
 
-	SphereCollider* b = new SphereCollider({0.0,10.0,0.0},1.0);
+	SphereCollider* b = new SphereCollider({0.0,10.0,0.0},1.0,1.0);
 
-	SphereCollider* c = new SphereCollider({1.0,0.0,0.0}, 1.0);
+	SphereCollider* c = new SphereCollider({1.0,0.0,0.0}, 1.0, 1.0);
 
 	std::vector<SphereCollider*> spheres;
-	//spheres.push_back(a);
-	//spheres.push_back(b);
-	//spheres.push_back(c);
-	//spheres.push_back(new SphereCollider({ 4.0,1.0,0.0 }, 1));
-	//spheres.push_back(new SphereCollider({ 2.0,5.0,0.0 }, 1));
-	//spheres.push_back(new SphereCollider({ -5.0,15.0,0.0 }, 1));
 
-	//spheres.push_back(new SphereCollider({ 2.0,7.0,0.0 }, 1));
-	//spheres.push_back(new SphereCollider({ 0.1,1.0,0.0 }, 1));
-	spheres.push_back(new SphereCollider({ 1.1,5.0,0.0 }, 1));
-	//for (int i = 0; i < 15; i++) {
-	//	spheres.push_back(new SphereCollider({ 0.0,(double)(i*2+5),0.0}, 1));
-	//}
+	// These are the spheres we will add to the 
+	spheres.push_back(new SphereCollider({ 1.1,3.0,0.0 }, 1,1));
 
-	double framerate = 120.0;
 
-	float timestep = 1.0 / 256;
+	double framerate = 400.0;
+
 	double cor = 1;
 	float milis=16.6;
+
+
+	int steps = 1;
+	float timestep = 1 / (framerate * steps);
 
 	while (Render::keepWindow) {
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -224,7 +219,7 @@ int main() {
 
 
 		
-		for (int i = 0; i < 256/framerate; i++) {
+		for (int i = 0; i < steps; i++) {
 			//std::cout << "iteration\n";
 			for (SphereCollider* sc : spheres) {
 				// already account for gravity
@@ -233,13 +228,9 @@ int main() {
 					if (sc == sc2) {
 						continue;
 					}
-
+					/*
 					if (Collision::hasCollided(*sc, *sc2)) {
-						//forces.y += 9.8*1/1000
 
-						//forces += -bvel;
-
-						//std::cout << sc->position << "   " << sc2->position << "\n";
 
 						glm::vec3 dir = glm::normalize(sc->position - sc2->position);
 						glm::vec3 dir2 = glm::normalize(sc->position - sc2->position);
@@ -252,7 +243,7 @@ int main() {
 						std::cout << "vel: " << sc->velocity << "\n";
 						std::cout << "Angle2: " << atan(sc->velocity.x / sc->velocity.y) << "\n";
 						int a;
-						std::cin >> a;
+						//std::cin >> a;
 
 						dir.z = 0;
 						dir.x = sin(angle * M_PI / 180.0) * -9.8;
@@ -284,39 +275,30 @@ int main() {
 
 					}
 
-					//if (sc->position.y <= 0) {
-					//	std::cout << "lower\n";
-					//	forces.y += 9.5;
-					//}
-					
-					
-					//if (fabs(sc->position.x - 5) > 0) {
-					//	sc->position.x = 5;
-					//}
+						*/
+				}
+				
 
-				}
-				//std::cout << "Forces: " << forces << "\n";
-				//std::cout << sc->position.y << "\n";
-				if (sc->position.y <= 0) {
+				/*
+				* 
+				*  Check if under the floor
+				*/
+				if (sc->position.y - sc->radius < 0) {
 					//forces.y += 9.8;
-					forces.y += 1 * -2*(sc->velocity.y) / timestep;
-					//sc->position.y = 0;
+					// This makes the ball bounce
+					forces.y += sc->elasticity * -2*(sc->velocity.y) / timestep;
 				}
-				if (sc->position.x > 10) {
+				
+				// Check collision with left and right
+				if (sc->position.x+ sc->radius > 10) {
 					forces.x += 1 * -2*(sc->velocity.x) / timestep;
 				}
-				if (sc->position.x < -10) {
+				if (sc->position.x - sc->radius < -10) {
 					forces.x += 1 * -2 * (sc->velocity.x) / timestep;
 				}
 
-				std::cout << "Forces1: " << forces << "\n";
-				//if (sc->position.x < -3) {
-				//	forces.x += abs(sc->velocity.x);
-				//}
-
-				//forces.x *= .99;
-				//forces.y *= .99;
-				//forces.z *= .99;
+				std::cout << "Forces: " << forces << "\n";
+				std::cout << "Position " << sc->position << "\n";
 				sc->acceleration = forces;
 				sc->velocity += sc->acceleration * timestep;
 				sc->position += sc->velocity * timestep;

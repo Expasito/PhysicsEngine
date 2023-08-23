@@ -8,10 +8,11 @@ SphereCollider::SphereCollider() {
 	mass = 1.0;
 }
 
-SphereCollider::SphereCollider(glm::vec3 pos, double rad) {
+SphereCollider::SphereCollider(glm::vec3 pos, double rad, double elasticity_) {
 	position = pos;
 	radius = rad;
 	velocity = { 0.0,0.0,0.0 };
 	acceleration = { 0.0,0.0,0.0 };
 	mass = 1.0;
+	elasticity = elasticity_;
 }

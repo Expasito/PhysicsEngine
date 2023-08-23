@@ -10,8 +10,9 @@ public:
     glm::vec3 acceleration;
     double radius;
     double mass;
+    double elasticity;
     SphereCollider();
-    SphereCollider(glm::vec3 pos, double rad);
+    SphereCollider(glm::vec3 pos, double rad, double elasticity);
 
     void print() {
         std::cout << "Sphere Collider\n";
